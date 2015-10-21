@@ -19,7 +19,8 @@ public class Account {
 	private Connection conn;
 	private int type;
 	private double balance;
-	private ArrayList<Transcation> transaction = new ArrayList<Transcation>(); 
+	private int customer_id;
+	//private ArrayList<Transcation> transaction = new ArrayList<Transcation>(); 
 	
 	//CONSTRUCTORS
 	public Account(String accountNum,String accountName){
@@ -58,7 +59,9 @@ public class Account {
 	}
 	
 	
-	//SEARCH FOR AN ACCOUNT IN ORACLE
+	//===================================================================
+	// 					SEARCH FOR AN ACCOUNT
+	//===================================================================
 	public ResultSet getAccount() throws SQLException{
 		String url = "jdbc:oracle:thin:system/password@localhost"; 
 	      
@@ -80,8 +83,53 @@ public class Account {
 	      
 	}
 	
+	//===================================================================
+	// 					GET ACCOUNT TYPE
+	//===================================================================
+	public int getAccountType(String accountType) throws SQLException{
+		int type;
+		String url = "jdbc:oracle:thin:system/password@localhost"; 
+	      
+        //properties for creating connection to Oracle database
+        Properties props = new Properties();
+        props.setProperty("user", "TESTUSERDB");
+        props.setProperty("password", "password");
+      
+        //creating connection to Oracle database using JDBC
+         conn = DriverManager.getConnection(url,props);
+		String sql = "Selet type from Account_Type where description = '" + accountType +"'";
+		PreparedStatement preStatement = conn.prepareStatement(sql);
+	    
+        ResultSet result = preStatement.executeQuery();
+        return type = result.getInt("type");
+		
+	}
 	
-	//ADD NEW ACCOUNT TO DATABASE
+	//===================================================================
+	// 					GET ACCOUNT DESCRIPTION
+	//===================================================================
+	public String getAccountDescription() throws SQLException{
+		String description;
+		String url = "jdbc:oracle:thin:system/password@localhost"; 
+	      
+        //properties for creating connection to Oracle database
+        Properties props = new Properties();
+        props.setProperty("user", "TESTUSERDB");
+        props.setProperty("password", "password");
+      
+        //creating connection to Oracle database using JDBC
+         conn = DriverManager.getConnection(url,props);
+		String sql = "Selet description from Account_Type where type = '" + this.type +"'";
+		PreparedStatement preStatement = conn.prepareStatement(sql);
+	    
+        ResultSet result = preStatement.executeQuery();
+        return description = result.getString("description");
+		
+	}
+	
+	//===================================================================
+	// 					ADD NEW ACCOUNT
+	//===================================================================
 	public boolean addNewAccount() throws SQLException {
 		boolean isAdded = false;
 		String url = "jdbc:oracle:thin:system/password@localhost";
@@ -101,13 +149,17 @@ public class Account {
 		if (result.next()) {
 			int accountID = result.getInt("NEXTVAL");
 
-			String sql = "INSERT INTO ACCOUNT (ACCOUNT_ID,ACCOUNT_NUM,ACCOUNT_NAME,STATUS) VALUES ("
+			String sql = "INSERT INTO ACCOUNT (ACCOUNT_ID,ACCOUNT_NUM,ACCOUNT_NAME,STATUS, TYPE, BALANCE) VALUES ("
 					+ accountID
 					+ ",'"
 					+ accountNum
 					+ "', '"
 					+ accountName
-					+ "',1)"; // 1 for open status
+					+ "',1," 
+					+ type
+					+ ","
+					+ balance
+					+")"; // 1 for open status
 			preStatement = conn.prepareStatement(sql);
 
 			result = preStatement.executeQuery();
@@ -117,9 +169,27 @@ public class Account {
 		
 		return isAdded;
 	}
+	//===================================================================
+	// 					UPDATE AN ACCOUNT
+	//===================================================================
+	public void updateAccount(String sql) throws SQLException{
+		String url = "jdbc:oracle:thin:system/password@localhost";
+
+		// properties for creating connection to Oracle database
+		Properties props = new Properties();
+		props.setProperty("user", "TESTUSERDB");
+		props.setProperty("password", "password");
+
+		// creating connection to Oracle database using JDBC
+		Connection conn = DriverManager.getConnection(url, props);
+		PreparedStatement preStatement = conn.prepareStatement(sql);
+		ResultSet result = preStatement.executeQuery();
+		
+	}
 	
-	
-	//REMOVE AN ACCOUNT FROM DATABASE
+	//===================================================================
+	// 					REMOVE AN ACCOUNT 
+	//===================================================================
 	public void removeAccount() throws SQLException {
 
 		String url = "jdbc:oracle:thin:system/password@localhost";
@@ -141,7 +211,9 @@ public class Account {
 	}
 
 	
-	//CLOSE AN ACCOUNT (CHANGE STATUS TO 0)
+	//===================================================================
+	// 					CLOSE AN ACCOUNT
+	//===================================================================
 	public void colseAccount() throws SQLException {
 		String url = "jdbc:oracle:thin:system/password@localhost";
 
@@ -162,7 +234,9 @@ public class Account {
 	}
 
 
-	//CALCULATE CURRENT BALANACE
+	//===================================================================
+	// 					CALCULATE ACCOUNT BALANCE
+	//===================================================================
 	public double getCurrentBalance() throws SQLException {
 		String url = "jdbc:oracle:thin:system/password@localhost";
 
@@ -178,7 +252,6 @@ public class Account {
 		PreparedStatement preStatement = conn.prepareStatement(sql);
 		ResultSet result = preStatement.executeQuery();
 		
-
 		double balance = 0;
 		while (result.next()) {
 				balance += result.getDouble("Amount");
@@ -191,14 +264,75 @@ public class Account {
 		
 		return balance;
 	}
-	
 
-	//WITHDRAWAL TRANSACTION 
+	// ===================================================================
+	// 					CHECK FOR AN OVERDRAFT
+	// ===================================================================
+	public boolean checkOverdraft(double amount) throws SQLException {
+		boolean isOverdraft = false;
+		String url = "jdbc:oracle:thin:system/password@localhost";
+
+		// properties for creating connection to Oracle database
+		Properties props = new Properties();
+		props.setProperty("user", "TESTUSERDB");
+		props.setProperty("password", "password");
+
+		// creating connection to Oracle database using JDBC
+		Connection conn = DriverManager.getConnection(url, props);
+		String sql = "select * from account where customer_id ="
+				+ this.customer_id + ", and type = 1";
+		PreparedStatement preStatement = conn.prepareStatement(sql);
+		ResultSet result = preStatement.executeQuery();
+		if (result.next()) {
+			if (result.getDouble("balance")< amount){
+				isOverdraft = true;
+			}
+
+		}
+		return isOverdraft;
+	}
+	
+	//===================================================================
+	// 					WITHDRAWAL FROM AN ACCOUNT
+	//===================================================================
 	public boolean withdrawalTransaction(double amount) throws SQLException, ParseException {
 		boolean isEnough = false;
-		if (this.getCurrentBalance() < amount) {
-			return isEnough;
+	
+		if (this.checkOverdraft(amount)) {
+			//handle overdraft
+			String url = "jdbc:oracle:thin:system/password@localhost";
+
+			// properties for creating connection to Oracle database
+			Properties props = new Properties();
+			props.setProperty("user", "TESTUSERDB");
+			props.setProperty("password", "password");
+
+			// creating connection to Oracle database using JDBC
+			Connection conn = DriverManager.getConnection(url, props);
+			String sql = "select * from account where customer_id ="
+					+ this.customer_id + ", and type = 2";
+			PreparedStatement preStatement = conn.prepareStatement(sql);
+			ResultSet result = preStatement.executeQuery();
+			if (result.next()) {
+				if (result.getDouble("balance")< balance){
+					return isEnough;
+				}else
+				{
+					amount -= this.balance;
+					this.setBalance(0);
+					sql = "Update Account set balance = " + this.getBalance() +" where account_id =" + this.accountID ;
+					this.updateAccount(sql);
+					sql = "Update Account set balance = " + (result.getDouble("balance") - amount -15) +" where account_id = " + result.getInt("account_id");
+					return isEnough = true;
+				}
+
+			}
+			
 		} else {
+			//handle no overdraft
+			this.setBalance(balance - amount);
+			String sql = "Update Account set balance = " + this.getBalance() +" where account_id = " + this.accountID ;
+			this.updateAccount(sql);
 			Date myDate = new Date();
 			DateFormat shortDf = DateFormat.getDateInstance(DateFormat.SHORT);
 			String dateStr= shortDf.format(myDate);
@@ -278,6 +412,12 @@ public class Account {
 	}
 	public void setBalance(double balance) {
 		this.balance = balance;
+	}
+	public int getCustomer_id() {
+		return customer_id;
+	}
+	public void setCustomer_id(int customer_id) {
+		this.customer_id = customer_id;
 	}
 }
 

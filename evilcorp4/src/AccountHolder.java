@@ -41,12 +41,56 @@ public AccountHolder(){
 		this.customer_birth = customer_birth;
 	}
     
-	public AccountHolder(int customer_id,String customer_name,String customer_birth){
+	public AccountHolder(int customer_id,String customer_name,String customer_birth,String id){
 		this.customer_id=customer_id;
 		this.customer_name = customer_name;
 		this.customer_birth=customer_birth;
-		
+		this.id = id;
 	}
+	
+	//SEARCH FOR AN ACCOUNT USING ID IN ORACLE
+		public ResultSet getAccountTypeByAccountHolderID(int type) throws SQLException{
+			String url = "jdbc:oracle:thin:system/password@localhost"; 
+		      
+	        //properties for creating connection to Oracle database
+	        Properties props = new Properties();
+	        props.setProperty("user", "TESTUSERDB");
+	        props.setProperty("password", "password");
+	      
+	        //creating connection to Oracle database using JDBC
+	         conn = DriverManager.getConnection(url,props);
+			 String sql = "select  * from  ACCOUNT where CUSTOMER_ID ='" + customer_id +"' AND type = " + type ;
+
+		        //creating PreparedStatement object to execute query
+		        PreparedStatement preStatement = conn.prepareStatement(sql);
+		    
+		        ResultSet result = preStatement.executeQuery();
+		        
+		        return result;
+		      
+		}
+	//SEARCH FOR AN ACCOUNT WITHOUT TYPE USING ID IN ORACLE	
+		public ResultSet getAccountByAccountHolderID() throws SQLException{
+			String url = "jdbc:oracle:thin:system/password@localhost"; 
+		      
+	        //properties for creating connection to Oracle database
+	        Properties props = new Properties();
+	        props.setProperty("user", "TESTUSERDB");
+	        props.setProperty("password", "password");
+	      
+	        //creating connection to Oracle database using JDBC
+	         conn = DriverManager.getConnection(url,props);
+			 String sql = "select  * from  ACCOUNT where CUSTOMER_ID =" + customer_id ;
+
+		        //creating PreparedStatement object to execute query
+		        PreparedStatement preStatement = conn.prepareStatement(sql);
+		    
+		        ResultSet result = preStatement.executeQuery();
+		        
+		        return result;
+		      
+		}
+	
 	//SEARCH FOR AN CUSTOMER IN ORACLE
 		public ResultSet searchAccountHolder() throws SQLException{
 			String url = "jdbc:oracle:thin:system/password@localhost"; 
