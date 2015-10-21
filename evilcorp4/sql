@@ -69,7 +69,7 @@ insert into TRANSACTION_TYPE(type,description)values(002,'CHECK');
 insert into TRANSACTION_TYPE(type,description)values(003,'CREDIT CARD');
 insert into TRANSACTION_TYPE(type,description)values(004,'DEBIT CARD');
 
-SELECT*FROM TRANSACTION_TYPE;
+SELECT*FROM account_TYPE;
 
 alter table transaction drop column status;
 
@@ -103,3 +103,6 @@ ALTER TABLE ACCOUNT ADD CUSTOMER_ID INTEGER;
 ALTER TABLE ACCOUNT ADD FOREIGN KEY(customer_id)
  REFERENCES ACCOUNTHOLDER (customer_id);
 alter table accountholder add ID VARCHAR(20);
+
+
+Select * from account where customer_id = 1 and type = 2;
